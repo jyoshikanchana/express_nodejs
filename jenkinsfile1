@@ -1,0 +1,93 @@
+pipeline {
+    agent any
+     tools {
+         jdk 'jdk17'
+         nodejs 'nodejs'
+     }
+     environment {
+         SCANNER_HOME=tool 'sonar-scanner'
+     }
+    stages {
+         stage('clean workspace') {
+            steps {
+                deleteDir() // Delete workspace before starting the pipeline
+            }
+        }
+         stage('Git Clone') {
+            steps {
+              git credentialsId: 'git-creds', url: 'https://github.com/jyoshikanchana/express_nodejs.git'
+            }
+        }
+        stage('Sonar CA') {
+            steps {
+                script {
+             withSonarQubeEnv('sonar-server') {
+                 sh '''
+                 $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Helloworld \
+                 -Dsonar.projectKey=amazon-app
+                 '''
+             }
+            }
+            }
+        }
+		 stage('Quality Gate') {
+		steps {
+			waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+		}
+    }
+        stage('NPM') {
+            steps {
+              sh 'npm install'
+            }
+        }
+       stage('OWASP Dependency-Check Vulnerabilities') {
+           steps {
+               dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Helloworld' 
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+       } 
+         stage('Trivy File Report') {
+           steps {
+            sh 'trivy fs . > TRIVYFILESCAN.txt'
+            }
+       }
+       stage('docker image build') {
+         steps {
+           script {
+              withDockerRegistry(credentialsId: 'docker-creds', toolName: 'docker') {
+               sh '''
+                 docker build -t helloworld:latest .
+                 docker tag hellowrld:latest kanchanajyoshi/helloworld:latest
+                 docker push kanchanajyoshi/helloworld:latest
+             	 '''
+                }   
+             }
+         }
+       }
+       stage('Trivy Image scan') {
+           steps {
+            sh 'trivy image kanchanajyoshi/helloworld:latest > TRIVYIMAGESCAN.txt'
+            }
+       }
+stage('Update Deployment File') {
+        environment {
+            GIT_REPO_NAME = "express_nodejs"
+            GIT_USER_NAME = "jyoshikanchana
+"
+        }
+        steps {
+            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                sh '''
+                    git config user.email "jyoshikanchana@gmail.com"
+                    git config user.name "jyoshikanchana"
+                    BUILD_NUMBER=${BUILD_NUMBER}
+                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" ./express_nodejs/K8S_manifest
+                    git add ./express_nodejs/K8S_manifest
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                '''
+            }
+        }
+    }
+    }
+}
