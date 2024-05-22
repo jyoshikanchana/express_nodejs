@@ -1,0 +1,35 @@
+1) Install ArgoCD on AWS EKS
+Download the latest Argo CD version from https://github.com/argoproj/argo-cd/releases/latest.
+
+curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+
+chmod +x /usr/local/bin/argocd
+
+kubectl create namespace argocd
+
+
+2) Create ArgoCD Objects
+
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/core-install.yaml
+
+kubectl get pods -n argocd
+
+
+3) Publicly accessible ArgoCD-Server (change service type : clusterip to  NodePort or Loadbalancer)
+
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}' 
+
+
+
+Take the loadbalacer or Nodeport Ip  and access in browser
+login (decode the password)
+create a application by configuring git repo, namespace, deployment.yml path, cluster details)
+
+note : create a webhook for repo and select pull request as selected so any chamges done to the repo CI/CD job will automatically triggered.
+
+
+GitOps - ArgoCd 
+GitOps - git acts as a only source of truth for continous delivery and infrastructure deployment on EKS cluster.
+
+
+ 
