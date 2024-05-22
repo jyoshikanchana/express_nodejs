@@ -81,8 +81,8 @@ stage('Update Deployment File') {
                     git config user.email "jyoshikanchana@gmail.com"
                     git config user.name "jyoshikanchana"
                     BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" ./express_nodejs/K8S_manifest
-                    git add ./express_nodejs/K8S_manifest
+                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" K8S_manifest/deployment.yml
+                    git add K8S_manifest/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
                     git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                 '''
