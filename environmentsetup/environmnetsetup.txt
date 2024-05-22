@@ -66,20 +66,23 @@ docker run -d --name sonar -p 9000:9000 sonarqube:lts-community  > Sonar install
 ## step-3: Step-4: Jenkins configuration for various tools, plugins and syatem configuration  ##
 
  1) Install Required Plugins in Jenkins 
-    Eclipse Termurium, 
+        Eclipse Termurium jdk, 
 	SonarQube Scanner, 
-	NodeJS, OWASP Dependency-check, 
+	NodeJS, 
+        OWASP Dependency-check, 
 	Docker API
 
  2) global tool configuration  jenkins dashboard- manageJenkins- tools
-      SonarQube Scanner installation  tool name -sonar-server
+      Add sonar -sonar-server
       Add jdk - jdk17
       Add Nodejs - node16
+     Add docker - docker
+   Add dependency - DP-Helloworld
 	  
 	 
   3)jenkins-sonar integration 
 
-login sonar using http://publivip:9000/
+login sonar using http://public_ip:9000/
 go to sonar dashboard - Adminstartion -security- token generate token(sonar-token)
 sonar dashboard- Adminstartion - configuration - webhooks - create (http://jenkinsip:8080/sonar-webhook/)
 
@@ -97,16 +100,14 @@ if Working with Shared Libraries in Jenkins
 
 => Configure Shared Libraries in Jenkins (Manage Jenkins -> System -> Global Pipeline Libraries) give name as "Jenkins_shared_library" and use same name in pipeline.
 
-## credential configuration on jenkins ##
+## credential configuration on jenkins under Jenkins dashboard- ManageJenkins- credentials ##
  First create or collect credentials for bwelow resources
-1) github creds - Gitbhub-settings-developer settingd-personal access tocken-tocken classic-create new tocken-tocken
-2) sonar creds - sonardashboard-Adminstartion-security-tocken generate
-3) docker creds - dockerhub uname/passwd
+1) github credentials - Gitbhub-settings-developer settingd-personal access tocken-tocken classic-create new tocken-tocken  -- GITHUB_TOKEN
+2) sonar credentials - sonardashboard-Adminstartion-security-tocken generate - sonar-tocken
+3) docker credentials - dockerhub uname/passwd - docker-creds
 
 Jenkins dashboard- ManageJenkins- credentials
-1) sonar-tocken  as secrete text
-2) git-creds      as secrete text
-3) docker  as uname/passwd
+
 
 
 -------------------------------------------------------------------------------------------------------
