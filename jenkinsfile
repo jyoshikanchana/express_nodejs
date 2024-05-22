@@ -1,0 +1,109 @@
+@Library('Jenkins_shared_library') _
+def COLOR_MAP = [
+    'FAILURE' : 'danger',
+    'SUCCESS' : 'good'
+]
+
+pipeline{
+    agent any
+    parameters {
+        choice(name: 'action', choices: 'create\ndelete', description: 'Select create or destroy.')
+
+        string(name: 'DOCKER_HUB_USERNAME', defaultValue: 'kanchanajyoshi', description: 'Docker Hub Username')
+        string(name: 'IMAGE_NAME', defaultValue: 'helloworld', description: 'Docker Image Name')
+    }
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages{
+        stage('clean workspace'){
+            steps{
+                workspaceclean()
+            }
+        }
+        stage('checkout from Git'){
+            steps{
+               gitcheckout('https://github.com/jyoshikanchana/express_nodejs.git', 'main')
+            }
+        }
+        stage('sonarqube Analysis'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                sonarqubeanalysis()
+            }
+        }
+        stage('sonarqube QualitGate'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                script{
+                    def credentialsId = 'Sonar-token'
+                    qualitygate(credentialsId)
+                }
+            }
+        }
+        stage('Npm'){
+        when { expression { params.action == 'create'}}    
+            steps{
+               npminstall()
+            }
+        }
+        stage('Trivy file scan'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                trivyfilescan()
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Docker Build'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                script{
+                   def dockerHubUsername = params.DOCKER_HUB_USERNAME
+                   def imageName = params.IMAGE_NAME
+
+                   dockerbuild(dockerHubUsername, imageName)
+                }
+            }
+        }
+        stage('Trivy iamge'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                trivyimagescan()
+            }
+        }
+        stage('Run container'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                runcontainer()
+            }
+        }
+        stage('Remove container'){
+        when { expression { params.action == 'delete'}}    
+            steps{
+                deletecontainer()
+            }
+        }
+        stage('Kube deploy'){
+        when { expression { params.action == 'create'}}    
+            steps{
+                kubedeploy()
+            }
+        }
+        stage('kube deleter'){
+        when { expression { params.action == 'delete'}}    
+            steps{
+                kubedelete()
+            }
+        }
+    }
+}
+
