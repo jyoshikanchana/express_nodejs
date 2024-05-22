@@ -102,7 +102,7 @@ if Working with Shared Libraries in Jenkins
 
 ## credential configuration on jenkins under Jenkins dashboard- ManageJenkins- credentials ##
  First create or collect credentials for bwelow resources
-1) github credentials - Gitbhub-settings-developer settingd-personal access tocken-tocken classic-create new tocken-tocken  -- git-creds
+1) github credentials - Gitbhub-settings-developer settingd-personal access tocken-tocken classic-create new tocken-tocken  -- GITHUB_TOKEN
 2) sonar credentials - sonardashboard-Adminstartion-security-tocken generate - sonar-tocken
 3) docker credentials - dockerhub uname/passwd - docker-creds
 
